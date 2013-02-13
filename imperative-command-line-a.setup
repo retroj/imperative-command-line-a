@@ -1,0 +1,9 @@
+;; -*- scheme -*-
+
+(compile imperative-command-line-a.scm -J -s -O2 -d0)
+(compile imperative-command-line-a.import.scm -s -O2 -d0)
+
+(install-extension
+ 'imperative-command-line-a
+ '("imperative-command-line-a.so" "imperative-command-line-a.import.so")
+ '((version 0.1)))

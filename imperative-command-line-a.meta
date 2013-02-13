@@ -1,0 +1,6 @@
+;; -*- scheme -*-
+
+((license "BSD")
+ (category misc)
+ (author "John J. Foerch")
+ (synopsis "A simple, imperative-style command-line parser"))
