@@ -47,7 +47,7 @@
      srfi-13
      data-structures
      extras
-     miscmacros)
+     (only miscmacros dotimes))
 
 ;;;
 ;;; Language
