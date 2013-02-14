@@ -63,7 +63,7 @@ boilerplate code to use the parser is still a bit long.
 <procedure>(command-doc cmd)</procedure>
 <procedure>(command-body cmd)</procedure>
 <procedure>(command-name-string cmd)</procedure>
-<syntax>(make-command-group command ...)</syntax>
+<syntax>(make-command-group title . command-defs)</syntax>
 <syntax>(add-command-group title . command-defs)</syntax>
 <procedure>(callinfo-name callinfo)</procedure>
 <procedure>(callinfo-args callinfo)</procedure>
