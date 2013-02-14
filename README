@@ -1,0 +1,120 @@
+[[toc:]]
+
+== Description
+
+This is the command-line parser from Mowedline, now an independent
+project.  It is a simple imperative-style command-line parser, and the
+"-a" suffix on its name is there to suggest that this module represents
+only one of many possible imperative-style command-line syntaxes.
+
+An "imperative" command-line style is one in which the command-line
+arguments represent procedures and parameters, to be called in
+left-to-right order, a kind of DSL, or mini-language.  Contrast this style
+with other command-line styles where the options represent simple flags,
+and order is not significant.  In an imperative-style command-line, the
+options represent ''actions'' to take in the order given.
+
+There are times though, when strict left-to-right order is not desired,
+and to support these situations, imperative-command-line-a supports
+''command groups''.  If you want to take certain options out of the
+overall ordering, use groups.  When the command-line is parsed, commands
+from different command groups will be parsed into separate lists.  Order
+within groups is preserved.  Command groups are notably used to support
+"-help" and "-version" options which may appear anywhere in the
+command-line (barring positional errors).  A command group could also be
+used to support order-independent flag options that need to run before the
+imperative "actions".
+
+Imperative-command-line-a provides a pre-made command-group, "SPECIAL
+OPTIONS" which defines "help" and "version" commands, which your program
+gets automatically.  The output of these commands is configured in part by
+the parameters {{help-heading}} and {{help-minimum-intercolumn-space}}.
+If you don't want these predefined options, they can be overridden.
+
+Each defined command-line option takes a certain number of positional
+parameters.  Variable numbers of parameters are not currently supported.
+Since the distinction between command and parameter is purely positional,
+the conventional leading hyphens on option names are purely stylistic and
+may be omitted.
+
+This module has room to grow.  The initial set of features are those that
+meet the requirements of Mowedline, but now that this is a separate
+project, new uses and needs will undoubtedly arise, and future versions of
+this egg will be more powerful, flexible, and easier to use.  Ease of use
+is a definite concern because as you can see from the example below, the
+boilerplate code to use the parser is still a bit long.
+
+
+== Authors
+
+* John J Foerch
+
+
+== Requirements
+
+* [[miscmacros]]
+
+
+== API
+
+<procedure>(make-command name args doc body)</procedure>
+<procedure>(command-name cmd)</procedure>
+<procedure>(command-args cmd)</procedure>
+<procedure>(command-doc cmd)</procedure>
+<procedure>(command-body cmd)</procedure>
+<procedure>(command-name-string cmd)</procedure>
+<syntax>(make-command-group command ...)</syntax>
+<syntax>(add-command-group title . command-defs)</syntax>
+<procedure>(callinfo-name callinfo)</procedure>
+<procedure>(callinfo-args callinfo)</procedure>
+<procedure>(callinfo-thunk callinfo)</procedure>
+<procedure>(parse input . command-groups)</procedure>
+<parameter>groups</parameter>
+<parameter>help-heading</parameter>
+<parameter>help-minimum-intercolumn-space</parameter>
+
+
+== Examples
+
+<enscript highlight=scheme>
+(use srfi-1
+     (prefix imperative-command-line-a icla:))
+
+(icla:help-heading
+ "icla-example version 1.0, by Harry S Beethoven")
+
+(icla:add-command-group
+ "GENERAL OPTIONS"
+ ((foo)
+  doc: "print foo"
+  (print "foo"))
+ ((bar)
+  (print "bar")))
+
+(let-values (((special-commands general-commands)
+              (icla:parse (command-line-arguments))))
+  (cond
+   ((not (null? special-commands))
+    (let ((cmd (first special-commands)))
+      ((icla:callinfo-thunk cmd)))
+    (unless (and (null? (cdr special-commands))
+                 (null? general-commands))
+      (printf "~%Warning: the following commands were ignored:~%")
+      (for-each
+       (lambda (x) (printf "  ~S~%" (cons (icla:callinfo-name x) (icla:callinfo-args x))))
+       (append! (cdr special-commands) general-commands))))
+   (else
+    (for-each (lambda (cmd) ((icla:callinfo-thunk cmd)))
+              general-commands))))
+</enscript>
+
+
+== License
+
+BSD
+
+
+== Version History
+
+* 0.1 (February 13, 2013) initial release
+* 0.2 (February 14, 2013) simpler 'parse' call-form
