@@ -31,6 +31,7 @@
          command-doc
          command-body
          command-name-string
+         %make-command-group
          make-command-group
          add-command-group
          callinfo-name
@@ -78,12 +79,17 @@
     ((%make-command (name . args) #:doc doc . body)
      (make-command 'name 'args doc (lambda args . body)))
     ((%make-command (name . args) . body)
-     (make-command 'name 'args #f (lambda args . body)))))
+     (%make-command (name . args) #:doc #f . body))))
+
+(define-record command-group
+  title commands)
+
+(define %make-command-group make-command-group)
 
 (define-syntax make-command-group
   (syntax-rules ()
-    ((make-command-group command ...)
-     (list (%make-command . command) ...))))
+    ((make-command-group title command ...)
+     (%make-command-group title (list (%make-command . command) ...)))))
 
 (define-syntax add-command-group
   (syntax-rules ()
@@ -91,12 +97,11 @@
      (groups
       (append!
        (groups)
-       (list
-        (cons title (make-command-group . command-defs))))))))
+       (list (make-command-group title . command-defs)))))))
 
 (define (find-command-def name command-group)
   (find (lambda (x) (equal? name (command-name-string x)))
-        command-group))
+        (command-group-commands command-group)))
 
 
 ;;;
@@ -120,8 +125,7 @@
 ;;;
 
 (define (parse input)
-  (let* ((command-groups (map cdr (groups)))
-         (out (map (lambda (x) (list)) command-groups)))
+  (let* ((out (map (lambda (x) (list)) (groups))))
     (define (loop input count)
       (if (null? input)
           (apply values out)
@@ -134,7 +138,7 @@
                                (lambda (group)
                                  (set! def (find-command-def op group))
                                  def)
-                               command-groups)))
+                               (groups))))
             (unless def
               (error (sprintf "unexpected symbol ~S~%" opsym)))
             (let ((narg (length (command-args def))))
@@ -167,7 +171,7 @@
                          (* 3 (length (command-args def)))
                          (map (compose string-length symbol->string)
                               (command-args def))))
-                (append-map cdr (groups))))))
+                (append-map command-group-commands (groups))))))
     (define (help-section option-group)
       (for-each
        (lambda (def)
@@ -186,8 +190,8 @@
     (print (help-heading))
     (for-each
      (lambda (group)
-       (let ((title (car group))
-             (commands (cdr group)))
+       (let ((title (command-group-title group))
+             (commands (command-group-commands group)))
          (printf "~%~A~%~%" title)
          (help-section commands)))
      (groups))
