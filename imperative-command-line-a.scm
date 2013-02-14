@@ -119,8 +119,9 @@
 ;;; Parser
 ;;;
 
-(define (parse input . command-groups)
-  (let ((out (map (lambda (x) (list)) command-groups)))
+(define (parse input)
+  (let* ((command-groups (map cdr (groups)))
+         (out (map (lambda (x) (list)) command-groups)))
     (define (loop input count)
       (if (null? input)
           (apply values out)
