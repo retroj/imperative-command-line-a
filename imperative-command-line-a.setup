@@ -6,4 +6,4 @@
 (install-extension
  'imperative-command-line-a
  '("imperative-command-line-a.so" "imperative-command-line-a.import.so")
- '((version 0.1)))
+ '((version "0.2")))
