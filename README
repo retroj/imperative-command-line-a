@@ -40,9 +40,7 @@ may be omitted.
 This module has room to grow.  The initial set of features are those that
 meet the requirements of Mowedline, but now that this is a separate
 project, new uses and needs will undoubtedly arise, and future versions of
-this egg will be more powerful, flexible, and easier to use.  Ease of use
-is a definite concern because as you can see from the example below, the
-boilerplate code to use the parser is still a bit long.
+this egg will be more powerful, flexible, and easier to use.
 
 
 == Authors
@@ -65,10 +63,18 @@ boilerplate code to use the parser is still a bit long.
 <procedure>(command-name-string cmd)</procedure>
 <syntax>(make-command-group title . command-defs)</syntax>
 <syntax>(add-command-group title . command-defs)</syntax>
-<procedure>(callinfo-name callinfo)</procedure>
-<procedure>(callinfo-args callinfo)</procedure>
-<procedure>(callinfo-thunk callinfo)</procedure>
+<procedure>(parse-abort)</procedure>
+
+Helper procedure for use in command bodies to stop calling of commands,
+and inform the calling program that it should exit.  This is used by the
+built-in special commands {{-help}} and {{-version}} to ensure that only
+one command is called.
+
 <procedure>(parse input . command-groups)</procedure>
+
+Returns {{#t}} on successful completion of calling commands, {{#f}} if
+parsing was aborted.
+
 <parameter>groups</parameter>
 <parameter>help-heading</parameter>
 <parameter>help-minimum-intercolumn-space</parameter>
@@ -91,21 +97,7 @@ boilerplate code to use the parser is still a bit long.
  ((bar)
   (print "bar")))
 
-(let-values (((special-commands general-commands)
-              (icla:parse (command-line-arguments))))
-  (cond
-   ((not (null? special-commands))
-    (let ((cmd (first special-commands)))
-      ((icla:callinfo-thunk cmd)))
-    (unless (and (null? (cdr special-commands))
-                 (null? general-commands))
-      (printf "~%Warning: the following commands were ignored:~%")
-      (for-each
-       (lambda (x) (printf "  ~S~%" (cons (icla:callinfo-name x) (icla:callinfo-args x))))
-       (append! (cdr special-commands) general-commands))))
-   (else
-    (for-each (lambda (cmd) ((icla:callinfo-thunk cmd)))
-              general-commands))))
+(icla:parse (command-line-arguments))
 </enscript>
 
 
