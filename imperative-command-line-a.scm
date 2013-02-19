@@ -125,49 +125,52 @@
 (define (abort-parse)
   (signal (make-property-condition 'abort-parse)))
 
-(define (parse input)
-  (let* ((out (map (lambda (x) (list)) (groups))))
-    (define (loop input count)
-      (if (null? input)
-          out
-          (let* ((opsym (first input))
-                 (input (rest input))
-                 (count (- count 1))
-                 (op (string-trim opsym #\-))
-                 (def #f)
-                 (group-index (list-index
-                               (lambda (group)
-                                 (set! def (find-command-def op group))
-                                 def)
-                               (groups))))
-            (unless def
-              (error (sprintf "unexpected symbol ~S~%" opsym)))
-            (let ((narg (length (command-args def))))
-              (when (< count narg)
-                (error (sprintf "~A requires ~A arguments, but only ~A were given"
-                                op narg count)))
-              (let ((d (list-tail out group-index)))
-                (set-car! d (append! (car d) (list (make-callinfo def (take input narg))))))
-              (loop (list-tail input narg) (- count narg))))))
+(define (%parse input)
+  (let* ((callinfos (map (lambda (x) (list)) (groups))))
+    (let loop ((input input)
+               (count (length input)))
+      (cond
+       ((null? input) callinfos)
+       (else
+        (let* ((opsym (first input))
+               (input (rest input))
+               (count (- count 1))
+               (op (string-trim opsym #\-))
+               (def #f)
+               (group-index (list-index
+                             (lambda (group)
+                               (set! def (find-command-def op group))
+                               def)
+                             (groups))))
+          (unless def
+            (error (sprintf "unexpected symbol ~S~%" opsym)))
+          (let ((narg (length (command-args def))))
+            (when (< count narg)
+              (error (sprintf "~A requires ~A arguments, but only ~A were given"
+                              op narg count)))
+            (let ((d (list-tail callinfos group-index)))
+              (set-car! d (append! (car d) (list (make-callinfo def (take input narg))))))
+            (loop (list-tail input narg) (- count narg)))))))))
 
-    (let ((callinfos (apply append! (loop input (length input))))
-          (called 0))
-      (condition-case
-       (begin
-         (for-each
-          (lambda (cmd)
-            (set! called (+ 1 called))
-            ((callinfo-thunk cmd)))
-          callinfos)
-         #t)
-       [(abort-parse)
-        (let ((uncalled (drop callinfos called)))
-          (unless (null? uncalled)
-            (printf "~%Warning: the following commands were ignored:~%")
-            (for-each
-             (lambda (x) (printf "  ~S~%" (cons (callinfo-name x) (callinfo-args x))))
-             uncalled)))
-        #f]))))
+(define (parse input)
+  (let ((callinfos (apply append! (%parse input)))
+        (called 0))
+    (condition-case
+        (begin
+          (for-each
+           (lambda (cmd)
+             (set! called (+ 1 called))
+             ((callinfo-thunk cmd)))
+           callinfos)
+          #t)
+      ((abort-parse)
+       (let ((uncalled (drop callinfos called)))
+         (unless (null? uncalled)
+           (printf "~%Warning: the following commands were ignored:~%")
+           (for-each
+            (lambda (x) (printf "  ~S~%" (cons (callinfo-name x) (callinfo-args x))))
+            uncalled))
+         #f)))))
 
 
 ;;;
