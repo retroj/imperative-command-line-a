@@ -34,9 +34,7 @@
          %make-command-group
          make-command-group
          add-command-group
-         callinfo-name
-         callinfo-args
-         callinfo-thunk
+         abort-parse
          parse
          groups
          help-heading
@@ -124,11 +122,14 @@
 ;;; Parser
 ;;;
 
+(define (abort-parse)
+  (signal (make-property-condition 'abort-parse)))
+
 (define (parse input)
   (let* ((out (map (lambda (x) (list)) (groups))))
     (define (loop input count)
       (if (null? input)
-          (apply values out)
+          out
           (let* ((opsym (first input))
                  (input (rest input))
                  (count (- count 1))
@@ -148,7 +149,25 @@
               (let ((d (list-tail out group-index)))
                 (set-car! d (append! (car d) (list (make-callinfo def (take input narg))))))
               (loop (list-tail input narg) (- count narg))))))
-    (loop input (length input))))
+
+    (let ((callinfos (apply append! (loop input (length input))))
+          (called 0))
+      (condition-case
+       (begin
+         (for-each
+          (lambda (cmd)
+            (set! called (+ 1 called))
+            ((callinfo-thunk cmd)))
+          callinfos)
+         #t)
+       [(abort-parse)
+        (let ((uncalled (drop callinfos called)))
+          (unless (null? uncalled)
+            (printf "~%Warning: the following commands were ignored:~%")
+            (for-each
+             (lambda (x) (printf "  ~S~%" (cons (callinfo-name x) (callinfo-args x))))
+             uncalled)))
+        #f]))))
 
 
 ;;;
@@ -195,10 +214,12 @@
          (printf "~%~A~%~%" title)
          (help-section commands)))
      (groups))
-    (newline)))
+    (newline)
+    (abort-parse)))
 
  ((version)
   doc: "prints the version"
-  (print (help-heading))))
+  (print (help-heading))
+  (abort-parse)))
 
 )
