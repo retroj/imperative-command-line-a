@@ -17,19 +17,20 @@ options represent ''actions'' to take in the order given.
 There are times though, when strict left-to-right order is not desired,
 and to support these situations, imperative-command-line-a supports
 ''command groups''.  If you want to take certain options out of the
-overall ordering, use groups.  When the command-line is parsed, commands
-from different command groups will be parsed into separate lists.  Order
-within groups is preserved.  Command groups are notably used to support
-"-help" and "-version" options which may appear anywhere in the
+overall ordering, you use groups.  When the command-line is parsed,
+commands from different command groups will be parsed into separate lists.
+Order within groups is preserved.  Command groups are notably used to
+support "-help" and "-version" options which may appear anywhere in the
 command-line (barring positional errors).  A command group could also be
 used to support order-independent flag options that need to run before the
 imperative "actions".
 
-Imperative-command-line-a provides a pre-made command-group, "SPECIAL
-OPTIONS" which defines "help" and "version" commands, which your program
-gets automatically.  The output of these commands is configured in part by
-the parameters {{help-heading}} and {{help-minimum-intercolumn-space}}.
-If you don't want these predefined options, they can be overridden.
+Imperative-command-line-a provides a pre-made command-group,
+{{special-options}}, which defines "help" and "version" commands, which
+your program gets automatically.  The output of these commands is
+configured in part by the parameters {{help-heading}} and
+{{help-minimum-intercolumn-space}}.  If you don't want these predefined
+options, they can be overridden.
 
 Each defined command-line option takes a certain number of positional
 parameters.  Variable numbers of parameters are not currently supported.
@@ -55,15 +56,39 @@ this egg will be more powerful, flexible, and easier to use.
 
 == API
 
-<procedure>(make-command name args doc body)</procedure>
-<procedure>(command-name cmd)</procedure>
-<procedure>(command-args cmd)</procedure>
-<procedure>(command-doc cmd)</procedure>
-<procedure>(command-body cmd)</procedure>
-<procedure>(command-name-string cmd)</procedure>
-<syntax>(make-command-group title . command-defs)</syntax>
-<syntax>(add-command-group title . command-defs)</syntax>
-<procedure>(parse-abort)</procedure>
+Any program that uses imperative-command-line-a will define at least one
+command group.  Typically, you will use {{define-command-group}} to do
+this.
+
+<syntax>(define-command-group name command-def ...)</syntax>
+<syntax>(define-command-group name #:title title command-def ...)</syntax>
+<syntax>(define-command-group* name command-def ...)</syntax>
+<syntax>(define-command-group* name #:title title command-def ...)</syntax>
+
+{{define-command-group}} is the typical way to define a command group.  It
+defines the symbol {{name}} as a command group constructed according to
+the rest of the arguments.  It adds the new group to {{(groups)}}.
+
+The starred form, {{define-command-group*}}, is the same, except that it
+does not automatically add the new group to {{(groups)}}.
+
+Each command-def looks like {{((name . args) . body)}} or {{((name . args)
+#:doc doc . body)}}.
+
+When no title is given, {{make-title}} is used to generate one
+automatically based on {{name}}.
+
+<procedure>(make-command-group title commands)</procedure>
+
+You will not normally use this procedure directly.  It is part of the
+expansion of {{define-command-group}} and {{define-command-group*}}.
+
+<parameter>make-title</parameter>
+
+The default value is a procedure that converts a symbol into an upper case
+string with hyphens replaced by spaces.
+
+<procedure>(abort-parse)</procedure>
 
 Helper procedure for use in command bodies to stop calling of commands,
 and inform the calling program that it should exit.  This is used by the
@@ -98,6 +123,19 @@ columns.  The help-minimum-intercolumn-space parameter gives the minimum
 number of spaces by which to separate the two columns, defaulting to 3.
 
 
+=== Commands API
+
+You will generally not need to use this part of the API, unless you write
+introspective commands, like your own -help.
+
+<procedure>(make-command name args doc body)</procedure>
+<procedure>(command-name cmd)</procedure>
+<procedure>(command-args cmd)</procedure>
+<procedure>(command-doc cmd)</procedure>
+<procedure>(command-body cmd)</procedure>
+<procedure>(command-name-string cmd)</procedure>
+
+
 == Examples
 
 <enscript highlight=scheme>
@@ -107,13 +145,12 @@ number of spaces by which to separate the two columns, defaulting to 3.
 (icla:help-heading
  "icla-example version 1.0, by Harry S Beethoven")
 
-(icla:add-command-group
- "GENERAL OPTIONS"
+(icla:define-command-group general-options
  ((foo)
   doc: "print foo"
   (print "foo"))
- ((bar)
-  (print "bar")))
+ ((bar baz)
+  (print baz)))
 
 (icla:parse (command-line-arguments))
 </enscript>
