@@ -70,14 +70,32 @@ and inform the calling program that it should exit.  This is used by the
 built-in special commands {{-help}} and {{-version}} to ensure that only
 one command is called.
 
-<procedure>(parse input . command-groups)</procedure>
+<procedure>(parse input)</procedure>
 
-Returns {{#t}} on successful completion of calling commands, {{#f}} if
-parsing was aborted.
+Parse the list of command-line arguments, input into commands and call
+them.  Returns {{#t}} on successful completion of calling commands, {{#f}}
+if parsing was aborted.
 
 <parameter>groups</parameter>
+
+The groups parameter holds the list of command-groups that {{parse}} draws
+from.  By default, it starts with a single group, Special Options, which
+contains the commands -help and -version.  The syntax form
+{{add-command-group}} adds to this list.  To remove the provided
+special-options group, call {{(group '())}} to initialize the list before
+adding any other command groups.
+
 <parameter>help-heading</parameter>
+
+The string value of help-heading is printed out by the provided -version
+command, and as the first line of the provided -help command.  Be sure to
+set this.
+
 <parameter>help-minimum-intercolumn-space</parameter>
+
+The provided -help command prints command call forms and docstrings in two
+columns.  The help-minimum-intercolumn-space parameter gives the minimum
+number of spaces by which to separate the two columns, defaulting to 3.
 
 
 == Examples
