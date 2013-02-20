@@ -184,7 +184,7 @@
 (add-command-group
  "SPECIAL OPTIONS  (evaluate first one and exit)"
  ((help)
-  doc: "displays this help"
+  #:doc "displays this help"
   (let ((longest
          (fold max 0
                (map
@@ -221,7 +221,7 @@
     (abort-parse)))
 
  ((version)
-  doc: "prints the version"
+  #:doc "prints the version"
   (print (help-heading))
   (abort-parse)))
 
