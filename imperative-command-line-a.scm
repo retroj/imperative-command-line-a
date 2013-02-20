@@ -31,14 +31,16 @@
          command-doc
          command-body
          command-name-string
-         %make-command-group
+         define-command-group
+         define-command-group*
          make-command-group
-         add-command-group
          abort-parse
          parse
          groups
+         make-title
          help-heading
-         help-minimum-intercolumn-space)
+         help-minimum-intercolumn-space
+         special-options)
 
 (import chicken scheme)
 
@@ -67,7 +69,7 @@
 
 
 ;;;
-;;; Command Group
+;;; Command Groups
 ;;;
 
 (define groups (make-parameter '()))
@@ -79,23 +81,34 @@
     ((%make-command (name . args) . body)
      (%make-command (name . args) #:doc #f . body))))
 
+(define make-title
+  (make-parameter
+   (lambda (sym)
+     (string-map!
+      (lambda (c) (if (char=? #\- c) #\space c))
+      (string-upcase! (symbol->string sym))))))
+
 (define-record command-group
   title commands)
 
-(define %make-command-group make-command-group)
+(define-syntax define-command-group*
+  (syntax-rules (#:title)
+    ((define-command-group* name #:title title command-def ...)
+     (define name (make-command-group
+                   title
+                   (list (%make-command . command-def)
+                         ...))))
+    ((define-command-group* name . command-defs)
+     (define-command-group* name
+       #:title ((make-title) 'name)
+       . command-defs))))
 
-(define-syntax make-command-group
+(define-syntax define-command-group
   (syntax-rules ()
-    ((make-command-group title command ...)
-     (%make-command-group title (list (%make-command . command) ...)))))
-
-(define-syntax add-command-group
-  (syntax-rules ()
-    ((add-command-group title . command-defs)
-     (groups
-      (append!
-       (groups)
-       (list (make-command-group title . command-defs)))))))
+    ((define-command-group name . args)
+     (begin
+       (define-command-group* name . args)
+       (groups (append! (groups) (list name)))))))
 
 (define (find-command-def name command-group)
   (find (lambda (x) (equal? name (command-name-string x)))
@@ -181,8 +194,8 @@
 
 (define help-minimum-intercolumn-space (make-parameter 3))
 
-(add-command-group
- "SPECIAL OPTIONS  (evaluate first one and exit)"
+(define-command-group special-options
+ #:title "SPECIAL OPTIONS  (evaluate first one and exit)"
  ((help)
   #:doc "displays this help"
   (let ((longest
