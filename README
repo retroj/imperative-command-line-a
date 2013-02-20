@@ -169,3 +169,4 @@ BSD
 * 0.1 (February 13, 2013) initial release
 * 0.2 (February 14, 2013) simpler 'parse' call-form
 * 0.3 (February 18, 2013) 'parse' now calls the commands
+* 0.4 (February 19, 2013) introducing define-command-group
