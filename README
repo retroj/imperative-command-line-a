@@ -5,7 +5,7 @@
 This is the command-line parser from Mowedline, now an independent
 project.  It is a simple imperative-style command-line parser, and the
 "-a" suffix on its name is there to suggest that this module represents
-only one of many possible imperative-style command-line syntaxes.
+only one of many possible imperative-style command-line frameworks.
 
 An "imperative" command-line style is one in which the command-line
 arguments represent procedures and parameters, to be called in
@@ -17,26 +17,28 @@ options represent ''actions'' to take in the order given.
 There are times though, when strict left-to-right order is not desired,
 and to support these situations, imperative-command-line-a supports
 ''command groups''.  If you want to take certain options out of the
-overall ordering, you use groups.  When the command-line is parsed,
-commands from different command groups will be parsed into separate lists.
-Order within groups is preserved.  Command groups are notably used to
-support "-help" and "-version" options which may appear anywhere in the
-command-line (barring positional errors).  A command group could also be
-used to support order-independent flag options that need to run before the
-imperative "actions".
+overall ordering, you use groups.  When the command-line is processed,
+commands from different command groups are first parsed into separate
+lists.  Then the commands in these lists are called, in the order of their
+respective command groups in the {{(groups)}} parameter.  Command groups
+are notably used to support "-help" and "-version" options, which may
+appear anywhere in the command-line (barring positional errors).  A
+command group could also be used to support order-independent flag options
+that need to run before the imperative "actions".
 
-Imperative-command-line-a provides a pre-made command-group,
-{{special-options}}, which defines "help" and "version" commands, which
-your program gets automatically.  The output of these commands is
-configured in part by the parameters {{help-heading}} and
-{{help-minimum-intercolumn-space}}.  If you don't want these predefined
-options, they can be overridden.
+Imperative-command-line-a provides one pre-made command-group,
+{{special-options}}, which defines the commands "help" and "version".
+These command line options are automatically available in your program,
+unless you override them (for which see {{groups}} below).  The output of
+these commands is configured in part by the parameters {{help-heading}}
+and {{help-minimum-intercolumn-space}}.
 
 Each defined command-line option takes a certain number of positional
-parameters.  Variable numbers of parameters are not currently supported.
-Since the distinction between command and parameter is purely positional,
-the conventional leading hyphens on option names are purely stylistic and
-may be omitted.
+parameters.  Your commands are not limited to a single parameter, but
+variable numbers of parameters are not yet supported.  Since the
+distinction between command and parameter is purely positional, the
+conventional leading hyphens on option names are purely stylistic and may
+be omitted.
 
 This module has room to grow.  The initial set of features are those that
 meet the requirements of Mowedline, but now that this is a separate
@@ -72,11 +74,12 @@ the rest of the arguments.  It adds the new group to {{(groups)}}.
 The starred form, {{define-command-group*}}, is the same, except that it
 does not automatically add the new group to {{(groups)}}.
 
-Each command-def looks like {{((name . args) . body)}} or {{((name . args)
-#:doc doc . body)}}.
-
 When no title is given, {{make-title}} is used to generate one
-automatically based on {{name}}.
+automatically based on {{name}}.  The title is used in the -help display.
+
+Each command-def looks like {{((name . args) . body)}} or {{((name . args)
+#:doc doc . body)}}.  The {{#:doc}} keyword may be used to store a short
+docstring for the command, which will be printed in the -help display.
 
 <procedure>(make-command-group title commands)</procedure>
 
@@ -104,11 +107,11 @@ if parsing was aborted.
 <parameter>groups</parameter>
 
 The groups parameter holds the list of command-groups that {{parse}} draws
-from.  By default, it starts with a single group, Special Options, which
+from.  By default, it starts with a single group, special-options, which
 contains the commands -help and -version.  The syntax form
-{{add-command-group}} adds to this list.  To remove the provided
+{{define-command-group}} adds to this list.  To remove the provided
 special-options group, call {{(group '())}} to initialize the list before
-adding any other command groups.
+defining any other command groups.
 
 <parameter>help-heading</parameter>
 
