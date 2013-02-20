@@ -88,8 +88,9 @@ expansion of {{define-command-group}} and {{define-command-group*}}.
 
 <parameter>make-title</parameter>
 
-The default value is a procedure that converts a symbol into an upper case
-string with hyphens replaced by spaces.
+Value is a procedure that converts a symbol to a string, suitable for use
+in -help titling. The default upcases the string and replaces hyphen with
+spacen.
 
 <procedure>(abort-parse)</procedure>
 
