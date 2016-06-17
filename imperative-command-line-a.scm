@@ -56,6 +56,16 @@
 
 (define rest cdr)
 
+(define (signal-parse-error msg . args)
+  (signal
+   (make-composite-condition
+    (make-property-condition 'exn
+                             'location 'parse
+                             'message msg
+                             'arguments args)
+    (make-property-condition 'icla)
+    (make-property-condition 'parse))))
+
 
 ;;;
 ;;; Command
@@ -156,11 +166,12 @@
                                def)
                              (groups))))
           (unless def
-            (error (sprintf "unexpected symbol ~S~%" opsym)))
+            (signal-parse-error "unexpected symbol" opsym))
           (let ((narg (length (command-args def))))
             (when (< count narg)
-              (error (sprintf "~A requires ~A arguments, but only ~A were given"
-                              op narg count)))
+              (signal-parse-error
+               (sprintf "~A requires ~A arguments, but only ~A were given"
+                        op narg count)))
             (let ((d (list-tail callinfos group-index)))
               (set-car! d (append! (car d) (list (make-callinfo def (take input narg))))))
             (loop (list-tail input narg) (- count narg)))))))))
